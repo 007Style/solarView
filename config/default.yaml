@@ -1,0 +1,34 @@
+# solarView configuration file
+# This file can be placed at:
+#   - /Users/username/.solarview/config.yaml  (user-level)
+#   - <solarView>/config/default.yaml (bundled default)
+#
+# User-level config overrides the defaults.
+
+inverter:
+  host: "192.168.1.7"
+  port: 1502        # SolarEdge modbus-TCP gateway port (NOT 80)
+  units: [1, 2, 3]  # Modbus unit IDs for each inverter
+  timeout: 5.0
+  retries: 1
+
+battery:
+  host: "192.168.1.7"
+  port: 1502
+  # Battery unit IDs are auto-derived from inverter count in the app:
+  # Inv1: primary=15, secondary=14; Inv2: primary=13, secondary=12; etc.
+  # To pin a specific battery, set unit_ids here:
+  unit_ids: [15]   # Currently one battery on Inverter 1 (primary)
+  timeout: 5.0
+  retries: 1
+
+logging:
+  enabled: true
+  directory: "~/solarView"    # CSV and run log files stored here
+  run_log_enabled: true       # Write solarview_run_log_DATE.txt for debugging
+
+ui:
+  refresh_interval_ms: 1000   # UI update frequency
+  poll_interval_seconds: 2    # Modbus polling interval (2, 5, 30, or 60)
+  chart_window_hours: 2       # Rolling window shown in charts (2 or 12 hours)
+  theme: "dark"               # "light" or "dark"

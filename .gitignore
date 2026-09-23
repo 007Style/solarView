@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# PyInstaller
+*.spec.bak
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Log / data output files
+solarview_log_*.csv
+solarview_run_log_*.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temp
+*.tmp
+*.bak
+~/
