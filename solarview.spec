@@ -26,6 +26,9 @@ datas += collect_data_files('matplotlib')
 # Collect pymodbus data files if any
 datas += collect_data_files('pymodbus')
 
+# Collect Pillow — matplotlib depends on it at runtime
+datas += collect_data_files('PIL')
+
 # ── Hidden imports that PyInstaller static analysis misses ───────────────────
 hiddenimports = [
     # matplotlib TkAgg backend — not auto-detected because it's selected at runtime
@@ -43,6 +46,11 @@ hiddenimports = [
     'tkinter.messagebox',
     # yaml
     'yaml',
+    # Pillow — required by matplotlib.colors at runtime
+    'PIL',
+    'PIL.Image',
+    'PIL.ImageDraw',
+    'PIL.ImageFilter',
     # our packages
     'solaredge_modbus',
     'solaredge_modbus.client',
@@ -55,6 +63,7 @@ hiddenimports = [
 ]
 
 hiddenimports += collect_submodules('pymodbus')
+hiddenimports += collect_submodules('PIL')
 
 a = Analysis(
     ['main.py'],
@@ -66,13 +75,9 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # Keep the bundle lean — exclude things we definitely don't use
+        # Only exclude GUI toolkits we definitely don't use
         'PyQt5', 'PyQt6', 'PySide2', 'PySide6',
         'wx', 'gi', 'gtk',
-        'IPython', 'jupyter',
-        'scipy', 'pandas', 'sklearn',
-        'PIL', 'cv2',
-        'test', 'unittest',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
