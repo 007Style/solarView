@@ -95,17 +95,31 @@ Seriously though — if solarView saves you even one annoying trip to the SolarE
 
 ## ⚡ Quick Start (macOS — Pre-built App)
 
-**Zero Python required.** Just download and run.
+**Zero Python required.**
 
 1. Go to the [**Releases page**](../../releases)
 2. Download `solarView-1.0.0-macos-arm64.dmg`
 3. Open the DMG
-4. Drag **solarView** to your **Applications** folder
-5. Double-click **solarView**
 
-> 🍎 **First launch warning:** macOS will say *"solarView cannot be opened because it is from an unidentified developer."* This is because we're not paying Apple $99/year for a signing certificate. Right-click the app → **Open** → **Open**. You'll only need to do this once.
+### Easiest install — double-click `Install.command` in the DMG
 
-That's it. The app contains its entire Python runtime. Nothing to install.
+The DMG contains an `Install.command` script. Double-click it — Terminal opens, strips the Gatekeeper quarantine flag, copies solarView to `/Applications`, and launches it. Done.
+
+### Manual install — drag to Applications
+
+Drag **solarView.app** to the **Applications** folder. Then on first launch:
+
+> 🍎 **App won't open?** macOS silently blocks apps without an Apple Developer certificate. Fix it with **one of these**:
+>
+> **Option A** — Right-click the app → **Open** → **Open** (one-time only)
+>
+> **Option B** — Run this in Terminal:
+> ```bash
+> xattr -r -d com.apple.quarantine /Applications/solarView.app
+> ```
+> Then double-click normally — no warnings, ever again.
+
+The DMG also includes a `READ ME FIRST.txt` with these same instructions for anyone who misses this README.
 
 ---
 

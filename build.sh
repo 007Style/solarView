@@ -120,15 +120,123 @@ cp -r "dist/${APP_NAME}.app" "${DMG_STAGING}/"
 # Symlink to /Applications so the user can drag-and-drop
 ln -s /Applications "${DMG_STAGING}/Applications"
 
-# Create the DMG
+# ── Install.command — double-click installer that strips quarantine ───────────
+# macOS Gatekeeper quarantines every app downloaded from the internet.
+# Ad-hoc signed apps (no Apple Developer ID) are blocked silently.
+# This script removes the quarantine flag then launches the app — the user
+# just double-clicks it in Finder, no Terminal required.
+cat > "${DMG_STAGING}/Install.command" << 'INSTALL_EOF'
+#!/usr/bin/env bash
+# ── solarView — macOS Installer ───────────────────────────────────────────────
+# Double-click this file in Finder to install solarView.
+# It removes the Gatekeeper quarantine flag and copies the app to /Applications.
+set -euo pipefail
+
+APP="solarView.app"
+DMG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="${DMG_DIR}/${APP}"
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║   ☀️  solarView — macOS Installer    ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+
+# ── Step 1: Remove quarantine from the app bundle ────────────────────────────
+echo "► Removing macOS quarantine flag…"
+xattr -r -d com.apple.quarantine "${SRC}" 2>/dev/null || true
+echo "  ✓ Quarantine cleared"
+
+# ── Step 2: Copy to /Applications ────────────────────────────────────────────
+echo "► Copying solarView.app to /Applications…"
+if [[ -d "/Applications/${APP}" ]]; then
+    echo "  Removing previous version…"
+    rm -rf "/Applications/${APP}"
+fi
+cp -r "${SRC}" "/Applications/${APP}"
+echo "  ✓ Installed to /Applications/solarView.app"
+
+# ── Step 3: Remove quarantine from the installed copy too ────────────────────
+xattr -r -d com.apple.quarantine "/Applications/${APP}" 2>/dev/null || true
+
+# ── Step 4: Launch ────────────────────────────────────────────────────────────
+echo ""
+echo "✅ Installation complete! Launching solarView…"
+echo ""
+open "/Applications/${APP}"
+INSTALL_EOF
+
+chmod +x "${DMG_STAGING}/Install.command"
+
+# ── Plain-text open-me note ───────────────────────────────────────────────────
+cat > "${DMG_STAGING}/READ ME FIRST.txt" << 'NOTE_EOF'
+☀️ solarView — Installation Instructions
+==========================================
+
+IF THE APP WON'T OPEN after dragging to Applications:
+------------------------------------------------------
+macOS blocks apps that aren't signed with an Apple Developer certificate.
+Fix it in 5 seconds with ONE of these options:
+
+OPTION 1 — Double-click "Install.command" (easiest)
+  It removes the block and launches solarView automatically.
+  If Terminal asks for permission, click OK.
+
+OPTION 2 — Right-click the app → Open → Open
+  macOS shows a warning but lets you proceed.
+  You only need to do this ONCE.
+
+OPTION 3 — Terminal (one line)
+  xattr -r -d com.apple.quarantine /Applications/solarView.app
+
+WHY DOES THIS HAPPEN?
+---------------------
+Apple requires a $99/year Developer ID to sign apps "officially".
+solarView is free and open source — we're not paying Apple to give
+you free software. The app is completely safe; it's a Python app
+that reads Modbus data from your solar inverter over your local network.
+
+Source code: https://github.com/007Style/solarView
+
+From the minds of IBM Bob & Daneyand 🍺
+NOTE_EOF
+
+# ── Volume icon ───────────────────────────────────────────────────────────────
+if [[ -f "${SCRIPT_DIR}/icons/solarview.icns" ]]; then
+    cp "${SCRIPT_DIR}/icons/solarview.icns" "${DMG_STAGING}/.VolumeIcon.icns"
+    SetFile -a C "${DMG_STAGING}" 2>/dev/null || true
+fi
+
+# Create the DMG (writable first so we can bless the volume icon, then convert)
+TEMP_DMG="dist/${APP_NAME}-temp.dmg"
 hdiutil create \
     -volname "${APP_NAME} ${VERSION}" \
     -srcfolder "${DMG_STAGING}" \
     -ov \
+    -format UDRW \
+    "${TEMP_DMG}" \
+    2>/dev/null
+
+# Mount the writable DMG, set the volume icon via osascript, then unmount
+MOUNT_DIR="$(mktemp -d)"
+hdiutil attach "${TEMP_DMG}" -mountpoint "${MOUNT_DIR}" -noautoopen -quiet 2>/dev/null
+
+# Copy the volume icon into the mounted volume and bless it
+if [[ -f "${SCRIPT_DIR}/icons/solarview.icns" ]]; then
+    cp "${SCRIPT_DIR}/icons/solarview.icns" "${MOUNT_DIR}/.VolumeIcon.icns"
+    SetFile -a C "${MOUNT_DIR}" 2>/dev/null || true
+fi
+
+hdiutil detach "${MOUNT_DIR}" -quiet 2>/dev/null
+rm -rf "${MOUNT_DIR}"
+
+# Convert the writable DMG to compressed read-only
+hdiutil convert "${TEMP_DMG}" \
     -format UDZO \
     -imagekey zlib-level=9 \
-    "dist/${DMG_NAME}" \
-    2>/dev/null
+    -o "dist/${DMG_NAME}" \
+    -ov 2>/dev/null
+rm -f "${TEMP_DMG}"
 
 if [[ ! -f "dist/${DMG_NAME}" ]]; then
     echo "  ✗ DMG creation failed"

@@ -97,6 +97,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='icons/solarview.icns',
 )
 
 coll = COLLECT(
@@ -113,7 +114,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='solarView.app',
-    icon=None,           # set to 'icons/solarview.icns' once you have an icon
+    icon='icons/solarview.icns',
     bundle_identifier='com.daneyand.solarview',
     info_plist={
         'CFBundleDisplayName':        'solarView',
